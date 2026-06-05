@@ -40,7 +40,7 @@ jobs:
 
       - name: Run MLflow Project (Retraining)
         run: |
-          mlflow run MLProject --no-conda
+          mlflow run MLProject --env-manager local
 
       - name: Build and Push Docker Image
         run: |
