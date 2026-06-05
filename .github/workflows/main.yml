@@ -1,0 +1,58 @@
+name: MLProject Workflow CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  train-and-package:
+    runs-on: ubuntu-latest
+
+    env:
+      DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
+      MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_USER_TOKEN }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.7'
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas scikit-learn mlflow dagshub matplotlib seaborn
+
+      - name: Run MLflow Project (Retraining)
+        run: |
+          mlflow run MLProject --no-conda
+
+      - name: Build and Push Docker Image
+        run: |
+          python MLProject/build_and_push.py
+
+      - name: Upload Artifacts to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlproject-artifacts
+          path: |
+            mlruns/
+            model.pkl
+            confusion_matrix.png
+            classification_report.json
+          if-no-files-found: ignore
