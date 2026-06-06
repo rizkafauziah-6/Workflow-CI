@@ -14,6 +14,7 @@ jobs:
       DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_USER_TOKEN }}
       MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_USER_TOKEN }}
+      MLFLOW_TRACKING_URI: https://dagshub.com/rizkafauziah-6/Eksperimen_SML_RizkaAulia.mlflow
 
     steps:
       - name: Checkout Code
