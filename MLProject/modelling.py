@@ -23,4 +23,7 @@ with mlflow.start_run():
     rf = RandomForestClassifier(random_state=42)
     rf.fit(X_train, y_train)
 
+    # Log model secara manual agar terjamin tersimpan dengan nama 'model'
+    mlflow.sklearn.log_model(rf, "model")
+
     print("Model basic berhasil dilatih dan dicatat di DagsHub.")
