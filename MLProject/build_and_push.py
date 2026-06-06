@@ -3,31 +3,37 @@ import subprocess
 import sys
 
 def main():
-    print("Mencari run terbaru dari eksperimen...")
-    # Set tracking URI ke DagsHub (sudah dikonfigurasi lewat env var oleh GitHub Actions)
-    # Cari run terbaru dari eksperimen "Eksperimen_Basic_Churn"
-    experiment_name = "Eksperimen_Basic_Churn"
-    experiment = mlflow.get_experiment_by_name(experiment_name)
-    if not experiment:
-        print(f"Eksperimen '{experiment_name}' tidak ditemukan!")
-        sys.exit(1)
-        
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        order_by=["attribute.start_time DESC"],
-        max_results=1
-    )
-    
-    if runs.empty:
-        print("Tidak ada run yang ditemukan dalam eksperimen ini!")
-        sys.exit(1)
-        
-    latest_run_id = runs.iloc[0]["run_id"]
-    model_uri = f"runs:/{latest_run_id}/model"
+    import os
+    workspace_dir = os.environ.get("GITHUB_WORKSPACE", ".")
+    local_model_path = os.path.join(workspace_dir, "local_model")
     image_name = "alya6/churn-prediction-mlops:latest"
-    
-    print(f"Run ID Terakhir: {latest_run_id}")
-    print(f"Model URI: {model_uri}")
+
+    if os.path.exists(local_model_path):
+        model_uri = local_model_path
+        print(f"Menggunakan model lokal dari: {model_uri}")
+    else:
+        print("Model lokal tidak ditemukan. Melakukan fallback ke DagsHub...")
+        experiment_name = "Eksperimen_Basic_Churn"
+        experiment = mlflow.get_experiment_by_name(experiment_name)
+        if not experiment:
+            print(f"Eksperimen '{experiment_name}' tidak ditemukan!")
+            sys.exit(1)
+            
+        runs = mlflow.search_runs(
+            experiment_ids=[experiment.experiment_id],
+            order_by=["attribute.start_time DESC"],
+            max_results=1
+        )
+        
+        if runs.empty:
+            print("Tidak ada run yang ditemukan dalam eksperimen ini!")
+            sys.exit(1)
+            
+        latest_run_id = runs.iloc[0]["run_id"]
+        model_uri = f"runs:/{latest_run_id}/model"
+        print(f"Run ID Terakhir: {latest_run_id}")
+        
+    print(f"Model URI yang digunakan: {model_uri}")
     print(f"Mulai melakukan build Docker image dengan nama: {image_name}...")
     
     # Menjalankan mlflow models build-docker
